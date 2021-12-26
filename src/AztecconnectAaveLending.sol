@@ -71,7 +71,7 @@ contract AaveLendingBridge is IDefiBridge {
 
                 // Deposit `msg.value` amount of ETH
                 // receive 1:1 of aWETH
-                IERC20(WETH).approve(msg.sender, msg.value);
+                IERC20(WETH).approve(msg.sender, inputValue);
                 IWETHGateway(wethGateway).depositETH(lendingPoolAddress, msg.sender, 0);
 
             }
