@@ -34,6 +34,7 @@ contract AztecconnectAaveLendingTest is DSTest {
         aave   = Types.AztecAsset(2, AAVE, Types.AztecAssetType.ERC20); 
         inputAssetA  = aave;
         outputAssetA = weth;
+        inputValue   = 1 ether;
     }
 
     receive() external payable {}
