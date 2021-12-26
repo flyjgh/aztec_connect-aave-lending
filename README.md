@@ -11,12 +11,12 @@ It connects the [Aztec-connect](https://medium.com/aztec-protocol/private-defi-w
 ```solidity
 function convert(
     Types.AztecAsset calldata inputAssetA,
-    Types.AztecAsset calldata inputAssetB,
+    Types.AztecAsset calldata,
     Types.AztecAsset calldata outputAssetA,
-    Types.AztecAsset calldata outputAssetB,
+    Types.AztecAsset calldata,
     uint256 inputValue,
-    uint256 interactionNonce,
-    uint64 auxData
+    uint256,
+    uint64 mode
 )
 external payable returns (uint256 outputValueA, uint256 outputValueB, bool isAsync);
 ```
