@@ -42,7 +42,7 @@ contract AaveLendingBridge is IDefiBridge {
         Types.AztecAsset calldata,
         uint256 inputValue,
         uint256,
-        uint64
+        uint64 mode
         )
         external
         payable
@@ -71,46 +71,51 @@ contract AaveLendingBridge is IDefiBridge {
 
         // 1 - deposit
 
-        if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
+        if (mode == 0) {
 
-            // Deposit `msg.value` amount of ETH
-            // receive 1:1 of aWETH
-            IERC20(WETH).approve(msg.sender, msg.value);
-            IWETHGateway(wethGateway).depositETH(lendingPoolAddress, msg.sender, 0);
+            if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
 
-        }
+                // Deposit `msg.value` amount of ETH
+                // receive 1:1 of aWETH
+                IERC20(WETH).approve(msg.sender, msg.value);
+                IWETHGateway(wethGateway).depositETH(lendingPoolAddress, msg.sender, 0);
 
-        else if (inputAssetA.assetType == Types.AztecAssetType.ERC20) {
+            }
 
-            // approve asset
-            // call `deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)`
-            IERC20(inputAssetA.erc20Address).approve(msg.sender, inputValue);
-            lendingPool.deposit(inputAssetA.erc20Address, inputValue, msg.sender, 0);
+            else if (inputAssetA.assetType == Types.AztecAssetType.ERC20) {
 
-        }
+                // approve asset
+                // call `deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)`
+                IERC20(inputAssetA.erc20Address).approve(msg.sender, inputValue);
+                lendingPool.deposit(inputAssetA.erc20Address, inputValue, msg.sender, 0);
 
-        // 2 - withdraw
-
-        if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
-
-            // withdraw `inputValue` amount of aWETH
-            // receive 1:1 of ETH
-            (aWETH,,) = protocolDataProvider.getReserveTokensAddresses(WETH);
-            IERC20(aWETH).approve(lendingPoolAddress, inputValue);
-            IWETHGateway(wethGateway).withdrawETH(lendingPoolAddress, inputValue, msg.sender);
+            }
 
         }
 
-        else if (inputAssetA.assetType == Types.AztecAssetType.ERC20) {
+        else if (mode == 1) {
+            // 2 - withdraw
 
-            // approve asset
-            // call `withdraw(address asset, uint256 amount, address to)`
-            IERC20(inputAssetA.erc20Address).approve(lendingPoolAddress, inputValue);
-            lendingPool.withdraw(inputAssetA.erc20Address, inputValue, msg.sender);
+            if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
 
+                // withdraw `inputValue` amount of aWETH
+                // receive 1:1 of ETH
+                (aWETH,,) = protocolDataProvider.getReserveTokensAddresses(WETH);
+                IERC20(aWETH).approve(lendingPoolAddress, inputValue);
+                IWETHGateway(wethGateway).withdrawETH(lendingPoolAddress, inputValue, msg.sender);
+
+            }
+
+            else if (inputAssetA.assetType == Types.AztecAssetType.ERC20) {
+
+                // approve asset
+                // call `withdraw(address asset, uint256 amount, address to)`
+                IERC20(inputAssetA.erc20Address).approve(lendingPoolAddress, inputValue);
+                lendingPool.withdraw(inputAssetA.erc20Address, inputValue, msg.sender);
+
+            }
         }
-
-  }
+    }
 
   function canFinalise(
     uint256 /*interactionNonce*/
