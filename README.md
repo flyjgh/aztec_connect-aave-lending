@@ -4,7 +4,7 @@
 
 this repo contains a bridge contract (`AaveLendingBridge`).
 
-It connects the [Aztec-connect](https://medium.com/aztec-protocol/private-defi-with-the-aztec-connect-bridge-76c3da76d982) protocol to the Aave `deposit()` and `withdraw()` functions.
+It connects the [Aztec-connect](https://medium.com/aztec-protocol/private-defi-with-the-aztec-connect-bridge-76c3da76d982) protocol to the Aave protocol `deposit()` and `withdraw()` functions.
 
 ## Usage
 

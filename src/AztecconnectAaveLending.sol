@@ -63,15 +63,9 @@ contract AaveLendingBridge is IDefiBridge {
         address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
         address aWETH;
 
-
-        // When depositing, the LendingPool contract must have allowance() to spend funds on behalf of msg.sender for the
-        // amount to be deposited. This can be done via the standard ERC20 approve() method.
-        
         // TODO This should check the asset can be lended on AAVE instead of blindly trying to lend.
 
-        // 1 - deposit
-
-        if (mode == 0) {
+        if (mode == 0) { // deposit
 
             if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
 
@@ -90,11 +84,9 @@ contract AaveLendingBridge is IDefiBridge {
                 lendingPool.deposit(inputAssetA.erc20Address, inputValue, msg.sender, 0);
 
             }
-
         }
 
-        else if (mode == 1) {
-            // 2 - withdraw
+        else if (mode == 1) { // withdraw
 
             if (inputAssetA.assetType == Types.AztecAssetType.ETH) {
 
