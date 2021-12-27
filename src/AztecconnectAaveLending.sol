@@ -4,7 +4,7 @@ pragma solidity >=0.6.6 ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import { SafeMath } from "./interfaces/SafeMath.sol";
-// import { IERC20 } from "./interfaces/IERC20.sol";
+import { IERC20 } from "./interfaces/IERC20.sol";
 
 import { IDefiBridge } from "./interfaces/IDefiBridge.sol";
 import { Types } from "./interfaces/Types.sol";
@@ -12,13 +12,14 @@ import { ILendingPoolAddressesProvider } from "./interfaces/ILendingPoolAddresse
 import { IProtocolDataProvider } from "./interfaces/IProtocolDataProvider.sol";
 import { IWETHGateway } from "./interfaces/IWETHGateway.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { IERC20 } from "./interfaces/IERC20.sol";
 
 contract AaveLendingBridge is IDefiBridge {
     using SafeMath for uint256;
 
     address public immutable rollupProcessor;
     address immutable wethGatewayAddress;
+    address immutable WETH;
+    address aWETH;
     address lendingPoolAddress;
 
     ILendingPoolAddressesProvider immutable provider;
@@ -31,7 +32,8 @@ contract AaveLendingBridge is IDefiBridge {
         provider = ILendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
         DataProvider = IProtocolDataProvider(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
         wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;
-        wethGateway = IWETHGateway(wethGatewayAddress);
+        wethGateway = IWETHGateway(0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04);
+        WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     }
 
     receive() external payable {}
@@ -59,9 +61,6 @@ contract AaveLendingBridge is IDefiBridge {
 
         lendingPoolAddress = provider.getLendingPool();
         lendingPool = ILendingPool(lendingPoolAddress);
-
-        address WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-        address aWETH;
 
         // TODO This should check the asset can be lended on AAVE instead of blindly trying to lend.
 
@@ -94,6 +93,7 @@ contract AaveLendingBridge is IDefiBridge {
                 (aWETH,,) = DataProvider.getReserveTokensAddresses(WETH);
                 IERC20(aWETH).approve(wethGatewayAddress, inputValue);
                 wethGateway.withdrawETH(lendingPoolAddress, inputValue, msg.sender);
+                outputValueA = IERC20(inputAssetA.erc20Address).balanceOf(address(this));
 
             }
 
@@ -103,6 +103,7 @@ contract AaveLendingBridge is IDefiBridge {
                 // call `withdraw(address asset, uint256 amount, address to)`
                 IERC20(inputAssetA.erc20Address).approve(lendingPoolAddress, inputValue);
                 lendingPool.withdraw(inputAssetA.erc20Address, inputValue, msg.sender);
+                outputValueA = IERC20(inputAssetA.erc20Address).balanceOf(address(this));
 
             }
         }
