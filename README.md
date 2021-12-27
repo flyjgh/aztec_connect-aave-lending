@@ -10,9 +10,9 @@ It connects the [Aztec-connect](https://medium.com/aztec-protocol/private-defi-w
 
 This contract implements the `IDefiBridge` interface.
 
-It queries the lendingPool adress from `getLendingPool()`, and `getReserveTokensAddresses()` to get the correct `aToken` to redeem (when withdrawing) or to receive (when borrowing).
+It queries the lendingPool adress from Aave's `getLendingPool()` function, and callse `getReserveTokensAddresses()` to get the correct `aToken` to redeem (when withdrawing) or to receive (when borrowing).
 
-It also wraps and unwraps `inputAsset` if necessary, by calling the appropriate function depending on the `AztecAssetType` of the input token (e.g. `depositETH()` if `inputAsset` is `ETH`, which first wraps `ETH` to `WETH` before deposit).
+It also wraps and unwraps `inputAsset` if necessary, by calling the appropriate function depending on the `AztecAssetType` of the input token.
 
 ## Usage
 
