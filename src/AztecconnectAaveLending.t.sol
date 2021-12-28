@@ -57,8 +57,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         uint256 preBalanceIn  = IERC20(inputAssetA.erc20Address).balanceOf(address(bridge));
         uint256 preBalanceOut = IERC20(outputAssetA.erc20Address).balanceOf(address(bridge));
 
-        emit log_named_uint("balanceIn: ", preBalanceIn);
-        emit log_named_uint("balanceOut: ", preBalanceOut);
+        emit log_named_uint("input token balance: ", preBalanceIn);
+        emit log_named_uint("output token balance: ", preBalanceOut);
 
         (out,,)=bridge.convert(
         inputAssetA,
@@ -74,6 +74,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         uint256 postBalanceOut = IERC20(outputAssetA.erc20Address).balanceOf(address(bridge));
         assertEq(preBalanceIn - inputValue, postBalanceIn);
         assertEq(preBalanceOut + out, postBalanceOut);
+
+        emit log_named_uint("output: ", out);
     }
 
     function test_deposit_ETH() public {
@@ -86,8 +88,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         uint256 preBalanceIn  = address(bridge).balance;
         uint256 preBalanceOut = IERC20(outputAssetA.erc20Address).balanceOf(address(bridge));
 
-        emit log_named_uint("balanceIn: ", preBalanceIn);
-        emit log_named_uint("balanceOut: ", preBalanceOut);
+        emit log_named_uint("input token balance: ", preBalanceIn);
+        emit log_named_uint("output token balance: ", preBalanceOut);
 
         (out,,)=bridge.convert(
         inputAssetA,
@@ -103,6 +105,9 @@ contract AztecconnectAaveLendingTest is DSTest {
         uint256 postBalanceOut = IERC20(outputAssetA.erc20Address).balanceOf(address(bridge));
         assertEq(preBalanceIn - inputValue, postBalanceIn);
         assertEq(preBalanceOut + out, postBalanceOut);
+
+        // emit log_named_uint("output: ", out);
+
     }
 
     function test_withdraw_ERC20() public {
@@ -112,7 +117,7 @@ contract AztecconnectAaveLendingTest is DSTest {
         inputAssetA  = aaave;
         outputAssetA = aave;
         
-        bridge.convert(
+        (out,,)=bridge.convert(
         inputAssetA,
         inputAssetB,
         outputAssetA,
@@ -121,6 +126,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         0,
         1
         );
+
+        emit log_named_uint("output: ", out);
 
     }
 
@@ -131,7 +138,7 @@ contract AztecconnectAaveLendingTest is DSTest {
         inputAssetA  = aweth;
         outputAssetA = eth;
 
-        bridge.convert(
+        (out,,)=bridge.convert(
         inputAssetA,
         inputAssetB,
         outputAssetA,
@@ -140,6 +147,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         0,
         1
         );
+
+        emit log_named_uint("output: ", out);
 
     }
 }

@@ -74,13 +74,13 @@ contract AaveLendingBridge is IDefiBridge {
 
                 //check balance of output aToken
                 (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                uint preBalance = IERC20(aToken).balanceOf(address(this));
+                uint preBalance = IERC20(aToken).balanceOf(address(msg.sender));
 
                 // Deposit `msg.value` amount of ETH
                 // receive 1:1 of aWETH
                 wethGateway.depositETH{ value: inputValue }(lendingPoolAddress, msg.sender, 0);
                 
-                outputValue = preBalance - IERC20(aToken).balanceOf(address(this));
+                outputValue = preBalance - IERC20(aToken).balanceOf(address(msg.sender));
 
             }
 
@@ -88,14 +88,14 @@ contract AaveLendingBridge is IDefiBridge {
 
                 //check balance of output aToken
                 (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                uint preBalance = IERC20(aToken).balanceOf(address(this));
+                uint preBalance = IERC20(aToken).balanceOf(address(msg.sender));
 
                 // approve asset
                 // call `deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)`
                 IERC20(asset.erc20Address).approve(lendingPoolAddress, inputValue);
                 lendingPool.deposit(asset.erc20Address, inputValue, msg.sender, 0);
 
-                outputValue = preBalance - IERC20(aToken).balanceOf(address(this));
+                outputValue = preBalance - IERC20(aToken).balanceOf(address(msg.sender));
 
             }
         }
@@ -120,7 +120,7 @@ contract AaveLendingBridge is IDefiBridge {
             else if (asset.assetType == Types.AztecAssetType.ERC20) {
 
                 //check balance of token to withdraw
-                uint preBalance = IERC20(asset.erc20Address).balanceOf(address(this));
+                uint preBalance = IERC20(asset.erc20Address).balanceOf(address(msg.sender));
 
                 // approve asset
                 // call `withdraw(address asset, uint256 amount, address to)`
@@ -128,7 +128,7 @@ contract AaveLendingBridge is IDefiBridge {
                 IERC20(asset.erc20Address).approve(lendingPoolAddress, inputValue);
                 lendingPool.withdraw(asset.erc20Address, inputValue, msg.sender);
                 
-                outputValue = preBalance - IERC20(asset.erc20Address).balanceOf(address(this));
+                outputValue = preBalance - IERC20(asset.erc20Address).balanceOf(address(msg.sender));
 
             }
         }
