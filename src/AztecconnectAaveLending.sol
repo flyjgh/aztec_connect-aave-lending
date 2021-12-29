@@ -61,8 +61,8 @@ contract AaveLendingBridge is IDefiBridge {
         require(msg.sender == rollupProcessor, "AaveLendingBridge: INVALID_CALLER");
         isAsync = false;
 
-        // checks if the ROLLUP-PROCESSOR wants to deposit or borrow.
-        // if the outputAsset is VIRTUAL, the deposit() function is called.
+        // checks if the ROLLUP-PROCESSOR wants to make a deposit or borrow call.
+        // if the outputAsset is VIRTUAL, the deposit function is called.
         if (outputAsset.assetType == Types.AztecAssetType.VIRTUAL) {                             // deposit
 
         // check that the asset can be lended on AAVE
