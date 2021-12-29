@@ -3,7 +3,7 @@
 pragma solidity >=0.6.6 ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import { Types } from "./Types.sol";
+import { Types } from "../library/Types.sol";
 
 interface IDefiBridge {
   /**

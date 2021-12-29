@@ -3,49 +3,51 @@
 pragma solidity >=0.6.6 ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import { SafeMath } from "./interfaces/SafeMath.sol";
-import { IERC20 } from "./interfaces/IERC20.sol";
+import { SafeMath }                      from "./library/SafeMath.sol";
+import { Types }                         from "./library/Types.sol";
 
-import { IDefiBridge } from "./interfaces/IDefiBridge.sol";
-import { Types } from "./interfaces/Types.sol";
+import { IERC20 }                        from "./interfaces/IERC20.sol";
+import { IDefiBridge }                   from "./interfaces/IDefiBridge.sol";
+import { IWETHGateway }                  from "./interfaces/IWETHGateway.sol";
+import { ILendingPool }                  from "./interfaces/ILendingPool.sol";
+import { IProtocolDataProvider }         from "./interfaces/IProtocolDataProvider.sol";
 import { ILendingPoolAddressesProvider } from "./interfaces/ILendingPoolAddressesProvider.sol";
-import { IProtocolDataProvider } from "./interfaces/IProtocolDataProvider.sol";
-import { IWETHGateway } from "./interfaces/IWETHGateway.sol";
-import { ILendingPool } from "./interfaces/ILendingPool.sol";
 
 contract AaveLendingBridge is IDefiBridge {
     using SafeMath for uint256;
 
     address public immutable rollupProcessor;
     address immutable wethGatewayAddress;
-    address immutable WETH;
+    address immutable lendingPoolAddress;
     address aToken;
-    address lendingPoolAddress;
 
-    ILendingPoolAddressesProvider immutable provider;
-    IProtocolDataProvider immutable DataProvider;
     IWETHGateway immutable wethGateway;
-    ILendingPool lendingPool;
+    ILendingPool immutable lendingPool;
+    IProtocolDataProvider immutable DataProvider;
 
     constructor(address _rollupProcessor) {
-        rollupProcessor = _rollupProcessor;
-        provider = ILendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
-        DataProvider = IProtocolDataProvider(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
+      
+        ILendingPoolAddressesProvider provider;
+
+        rollupProcessor    = _rollupProcessor;
+        provider           = ILendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5);
+        DataProvider       = IProtocolDataProvider(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
         wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;
-        wethGateway = IWETHGateway(0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04);
-        WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+        wethGateway        = IWETHGateway(0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04);
+        lendingPoolAddress = provider.getLendingPool();
+        lendingPool        = ILendingPool(provider.getLendingPool());
     }
 
     receive() external payable {}
 
     function convert(
-        Types.AztecAsset calldata asset,
+        Types.AztecAsset calldata inputAsset,
         Types.AztecAsset calldata,
-        Types.AztecAsset calldata,
+        Types.AztecAsset calldata outputAsset,
         Types.AztecAsset calldata,
         uint256 inputValue,
         uint256,
-        uint64 mode
+        uint64
         )
         external
         payable
@@ -59,76 +61,66 @@ contract AaveLendingBridge is IDefiBridge {
         require(msg.sender == rollupProcessor, "AaveLendingBridge: INVALID_CALLER");
         isAsync = false;
 
-        lendingPoolAddress = provider.getLendingPool();
-        lendingPool = ILendingPool(lendingPoolAddress);
+        // checks if the ROLLUP-PROCESSOR wants to deposit or borrow.
+        // if the outputAsset is VIRTUAL, the deposit() function is called.
+        if (outputAsset.assetType == Types.AztecAssetType.VIRTUAL) {                             // deposit
 
-        // TODO This should check the asset can be lended on AAVE instead of blindly trying to lend.
+        // check that the asset can be lended on AAVE
+        (aToken,,) = DataProvider.getReserveTokensAddresses(inputAsset.erc20Address);
+        require(aToken != address(0x0), "AaveLendingBridge: INVALID_TOKEN");
 
-        // `mode` input selects the function to call.
-        // 0: deposit `token`, receive corresponding aToken.
-        // 1: withdraw `token`, redeem corresponding aToken.
-
-        if (mode == 0) { // deposit
-
-            if (asset.assetType == Types.AztecAssetType.ETH) {
-
-                //check balance of output aToken
-                (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                uint preBalance = IERC20(aToken).balanceOf(address(msg.sender));
+            if (inputAsset.assetType == Types.AztecAssetType.ETH) {
 
                 // Deposit `msg.value` amount of ETH
                 // receive 1:1 of aWETH
                 wethGateway.depositETH{ value: inputValue }(lendingPoolAddress, msg.sender, 0);
-                
-                outputValue = preBalance - IERC20(aToken).balanceOf(address(msg.sender));
+
+                // Return aWETH position
+                outputValue = inputValue;
 
             }
 
-            else if (asset.assetType == Types.AztecAssetType.ERC20) {
+            else if (inputAsset.assetType == Types.AztecAssetType.ERC20) {
 
-                //check balance of output aToken
-                (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                uint preBalance = IERC20(aToken).balanceOf(address(msg.sender));
-
-                // approve asset
+                // set allowance of inputAsset
                 // call `deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)`
-                IERC20(asset.erc20Address).approve(lendingPoolAddress, inputValue);
-                lendingPool.deposit(asset.erc20Address, inputValue, msg.sender, 0);
+                IERC20(inputAsset.erc20Address).approve(lendingPoolAddress, inputValue);
+                lendingPool.deposit(inputAsset.erc20Address, inputValue, msg.sender, 0);
 
-                outputValue = preBalance - IERC20(aToken).balanceOf(address(msg.sender));
+                // Return aToken position
+                outputValue = inputValue;
 
             }
         }
 
-        else if (mode == 1) { // withdraw
+        // if the inputAsset is VIRTUAL, the withdraw() function is called.
+        else if (inputAsset.assetType == Types.AztecAssetType.VIRTUAL) {                         // withdraw
 
-            if (asset.assetType == Types.AztecAssetType.ETH) {
+        // check that the asset can be withdrawn on AAVE
+        (aToken,,) = DataProvider.getReserveTokensAddresses(outputAsset.erc20Address);
+        require(aToken != address(0x0), "AaveLendingBridge: INVALID_TOKEN");
 
-                //check balance of ETH
-                uint preBalance = address(msg.sender).balance;
+            if (outputAsset.assetType == Types.AztecAssetType.ETH) {
 
-                // withdraw `inputValue` amount of aWETH
-                // receive 1:1 of ETH
-                (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                IERC20(aToken).approve(wethGatewayAddress, inputValue);
+                // set allowance of aWETH
+                // withdraw `inputValue` amount of ETH
+                IERC20(inputAsset.erc20Address).approve(wethGatewayAddress, inputValue);
                 wethGateway.withdrawETH(lendingPoolAddress, inputValue, msg.sender);
 
-                outputValue = preBalance - address(msg.sender).balance;
+                // Return withdrawn ETH amount
+                outputValue = inputValue;
 
             }
 
-            else if (asset.assetType == Types.AztecAssetType.ERC20) {
+            else if (outputAsset.assetType == Types.AztecAssetType.ERC20) {
 
-                //check balance of token to withdraw
-                uint preBalance = IERC20(asset.erc20Address).balanceOf(address(msg.sender));
-
-                // approve asset
+                // set allowance of inputAsset
                 // call `withdraw(address asset, uint256 amount, address to)`
-                (aToken,,) = DataProvider.getReserveTokensAddresses(asset.erc20Address);
-                IERC20(asset.erc20Address).approve(lendingPoolAddress, inputValue);
-                lendingPool.withdraw(asset.erc20Address, inputValue, msg.sender);
-                
-                outputValue = preBalance - IERC20(asset.erc20Address).balanceOf(address(msg.sender));
+                IERC20(inputAsset.erc20Address).approve(lendingPoolAddress, inputValue);
+                lendingPool.withdraw(outputAsset.erc20Address, inputValue, msg.sender);
+
+                // Return withdrawn ERC20 amount
+                outputValue = inputValue;
 
             }
         }
