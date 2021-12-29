@@ -73,7 +73,7 @@ contract AaveLendingBridge is IDefiBridge {
 
                 // Deposit `msg.value` amount of ETH
                 // receive 1:1 of aWETH
-                wethGateway.depositETH{ value: inputValue }(lendingPoolAddress, msg.sender, 0);
+                wethGateway.depositETH{ value: inputValue }(lendingPoolAddress, rollupProcessor, 0);
 
                 // Return aWETH position
                 outputValue = inputValue;
@@ -85,7 +85,7 @@ contract AaveLendingBridge is IDefiBridge {
                 // set allowance of inputAsset
                 // call `deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)`
                 IERC20(inputAsset.erc20Address).approve(lendingPoolAddress, inputValue);
-                lendingPool.deposit(inputAsset.erc20Address, inputValue, msg.sender, 0);
+                lendingPool.deposit(inputAsset.erc20Address, inputValue, rollupProcessor, 0);
 
                 // Return aToken position
                 outputValue = inputValue;
@@ -105,7 +105,7 @@ contract AaveLendingBridge is IDefiBridge {
                 // set allowance of aWETH
                 // withdraw `inputValue` amount of ETH
                 IERC20(inputAsset.erc20Address).approve(wethGatewayAddress, inputValue);
-                wethGateway.withdrawETH(lendingPoolAddress, inputValue, msg.sender);
+                wethGateway.withdrawETH(lendingPoolAddress, inputValue, rollupProcessor);
 
                 // Return withdrawn ETH amount
                 outputValue = inputValue;
@@ -117,7 +117,7 @@ contract AaveLendingBridge is IDefiBridge {
                 // set allowance of inputAsset
                 // call `withdraw(address asset, uint256 amount, address to)`
                 IERC20(inputAsset.erc20Address).approve(lendingPoolAddress, inputValue);
-                lendingPool.withdraw(outputAsset.erc20Address, inputValue, msg.sender);
+                lendingPool.withdraw(outputAsset.erc20Address, inputValue, rollupProcessor);
 
                 // Return withdrawn ERC20 amount
                 outputValue = inputValue;

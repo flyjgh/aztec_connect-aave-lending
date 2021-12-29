@@ -52,8 +52,6 @@ contract AztecconnectAaveLendingTest is DSTest {
         inputAssetA  = aave;
         outputAssetA = aaave;
 
-        IERC20(AAVE).transfer(address(bridge), inputValue);
-        
         (out,,)=bridge.convert(
         inputAssetA,
         inputAssetB,
@@ -64,8 +62,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         0
         );
 
-        emit log_named_uint("input asset balance",  IERC20(inputAssetA.erc20Address).balanceOf(address(msg.sender)));
-        emit log_named_uint("output asset balance", IERC20(outputAssetA.erc20Address).balanceOf(address(msg.sender)));
+        emit log_named_uint("input asset balance",  IERC20(inputAssetA.erc20Address).balanceOf(address(this)));
+        emit log_named_uint("output asset balance", IERC20(outputAssetA.erc20Address).balanceOf(address(this)));
 
     }
 
@@ -74,8 +72,6 @@ contract AztecconnectAaveLendingTest is DSTest {
         inputAssetA  = eth;
         outputAssetA = aweth;
         
-        (bool sent, ) = address(bridge).call{value: 1 ether}("");
-
         (out,,)=bridge.convert(
         inputAssetA,
         inputAssetB,
@@ -86,8 +82,8 @@ contract AztecconnectAaveLendingTest is DSTest {
         0
         );
 
-        emit log_named_uint("input asset balance", address(msg.sender).balance);
-        emit log_named_uint("output asset balance", IERC20(outputAssetA.erc20Address).balanceOf(address(msg.sender)));
+        emit log_named_uint("input asset balance", address(this).balance);
+        emit log_named_uint("output asset balance", IERC20(outputAssetA.erc20Address).balanceOf(address(this)));
 
     }
 
